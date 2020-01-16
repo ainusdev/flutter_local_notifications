@@ -92,46 +92,46 @@ typedef NS_ENUM(NSInteger, RepeatInterval) {
 }
 
 - (void)pendingNotificationRequests:(FlutterResult _Nonnull)result {
-    if(@available(iOS 10.0, *)) {
-        UNUserNotificationCenter *center =  [UNUserNotificationCenter currentNotificationCenter];
-        [center getPendingNotificationRequestsWithCompletionHandler:^(NSArray<UNNotificationRequest *> * _Nonnull requests) {
-            NSMutableArray<NSMutableDictionary<NSString *, NSObject *> *> *pendingNotificationRequests = [[NSMutableArray alloc] initWithCapacity:[requests count]];
-            for (UNNotificationRequest *request in requests) {
-                NSMutableDictionary *pendingNotificationRequest = [[NSMutableDictionary alloc] init];
-                pendingNotificationRequest[ID] = request.content.userInfo[NOTIFICATION_ID];
-                if (request.content.title != nil) {
-                    pendingNotificationRequest[TITLE] = request.content.title;
-                }
-                if (request.content.body != nil) {
-                    pendingNotificationRequest[BODY] = request.content.body;
-                }
-                if (request.content.userInfo[PAYLOAD] != [NSNull null]) {
-                    pendingNotificationRequest[PAYLOAD] = request.content.userInfo[PAYLOAD];
-                }
-                [pendingNotificationRequests addObject:pendingNotificationRequest];
-            }
-            result(pendingNotificationRequests);
-        }];
-    } else {
-        NSArray *notifications = [UIApplication sharedApplication].scheduledLocalNotifications;
-        NSMutableArray<NSDictionary<NSString *, NSObject *> *> *pendingNotificationRequests = [[NSMutableArray alloc] initWithCapacity:[notifications count]];
-        for( int i = 0; i < [notifications count]; i++) {
-            UILocalNotification* localNotification = [notifications objectAtIndex:i];
-            NSMutableDictionary *pendingNotificationRequest = [[NSMutableDictionary alloc] init];
-            pendingNotificationRequest[ID] = localNotification.userInfo[NOTIFICATION_ID];
-            if (localNotification.userInfo[TITLE] != [NSNull null]) {
-                pendingNotificationRequest[TITLE] = localNotification.userInfo[TITLE];
-            }
-            if (localNotification.alertBody) {
-                pendingNotificationRequest[BODY] = localNotification.alertBody;
-            }
-            if (localNotification.userInfo[PAYLOAD] != [NSNull null]) {
-                pendingNotificationRequest[PAYLOAD] = localNotification.userInfo[PAYLOAD];
-            }
-            [pendingNotificationRequests addObject:pendingNotificationRequest];
-        }
-        result(pendingNotificationRequests);
-    }
+//     if(@available(iOS 10.0, *)) {
+//         UNUserNotificationCenter *center =  [UNUserNotificationCenter currentNotificationCenter];
+//         [center getPendingNotificationRequestsWithCompletionHandler:^(NSArray<UNNotificationRequest *> * _Nonnull requests) {
+//             NSMutableArray<NSMutableDictionary<NSString *, NSObject *> *> *pendingNotificationRequests = [[NSMutableArray alloc] initWithCapacity:[requests count]];
+//             for (UNNotificationRequest *request in requests) {
+//                 NSMutableDictionary *pendingNotificationRequest = [[NSMutableDictionary alloc] init];
+//                 pendingNotificationRequest[ID] = request.content.userInfo[NOTIFICATION_ID];
+//                 if (request.content.title != nil) {
+//                     pendingNotificationRequest[TITLE] = request.content.title;
+//                 }
+//                 if (request.content.body != nil) {
+//                     pendingNotificationRequest[BODY] = request.content.body;
+//                 }
+//                 if (request.content.userInfo[PAYLOAD] != [NSNull null]) {
+//                     pendingNotificationRequest[PAYLOAD] = request.content.userInfo[PAYLOAD];
+//                 }
+//                 [pendingNotificationRequests addObject:pendingNotificationRequest];
+//             }
+//             result(pendingNotificationRequests);
+//         }];
+//     } else {
+//         NSArray *notifications = [UIApplication sharedApplication].scheduledLocalNotifications;
+//         NSMutableArray<NSDictionary<NSString *, NSObject *> *> *pendingNotificationRequests = [[NSMutableArray alloc] initWithCapacity:[notifications count]];
+//         for( int i = 0; i < [notifications count]; i++) {
+//             UILocalNotification* localNotification = [notifications objectAtIndex:i];
+//             NSMutableDictionary *pendingNotificationRequest = [[NSMutableDictionary alloc] init];
+//             pendingNotificationRequest[ID] = localNotification.userInfo[NOTIFICATION_ID];
+//             if (localNotification.userInfo[TITLE] != [NSNull null]) {
+//                 pendingNotificationRequest[TITLE] = localNotification.userInfo[TITLE];
+//             }
+//             if (localNotification.alertBody) {
+//                 pendingNotificationRequest[BODY] = localNotification.alertBody;
+//             }
+//             if (localNotification.userInfo[PAYLOAD] != [NSNull null]) {
+//                 pendingNotificationRequest[PAYLOAD] = localNotification.userInfo[PAYLOAD];
+//             }
+//             [pendingNotificationRequests addObject:pendingNotificationRequest];
+//         }
+//         result(pendingNotificationRequests);
+//     }
 }
 
 - (void)initialize:(FlutterMethodCall * _Nonnull)call result:(FlutterResult _Nonnull)result {
@@ -158,44 +158,44 @@ typedef NS_ENUM(NSInteger, RepeatInterval) {
         requestedBadgePermission = [arguments[REQUEST_BADGE_PERMISSION] boolValue];
     }
     
-    if(@available(iOS 10.0, *)) {
-        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-        
-        UNAuthorizationOptions authorizationOptions = 0;
-        if (requestedSoundPermission) {
-            authorizationOptions += UNAuthorizationOptionSound;
-        }
-        if (requestedAlertPermission) {
-            authorizationOptions += UNAuthorizationOptionAlert;
-        }
-        if (requestedBadgePermission) {
-            authorizationOptions += UNAuthorizationOptionBadge;
-        }
-        [center requestAuthorizationWithOptions:(authorizationOptions) completionHandler:^(BOOL granted, NSError * _Nullable error) {
-            if(self->launchPayload != nil) {
-                [self handleSelectNotification:self->launchPayload];
-            }
-            result(@(granted));
-        }];
-    } else {
-        UIUserNotificationType notificationTypes = 0;
-        if (requestedSoundPermission) {
-            notificationTypes |= UIUserNotificationTypeSound;
-        }
-        if (requestedAlertPermission) {
-            notificationTypes |= UIUserNotificationTypeAlert;
-        }
-        if (requestedBadgePermission) {
-            notificationTypes |= UIUserNotificationTypeBadge;
-        }
-        UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:notificationTypes categories:nil];
-        [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
-        if(launchNotification != nil) {
-            NSString *payload = launchNotification.userInfo[PAYLOAD];
-            [self handleSelectNotification:payload];
-        }
-        result(@YES);
-    }
+//     if(@available(iOS 10.0, *)) {
+//         UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+//
+//         UNAuthorizationOptions authorizationOptions = 0;
+//         if (requestedSoundPermission) {
+//             authorizationOptions += UNAuthorizationOptionSound;
+//         }
+//         if (requestedAlertPermission) {
+//             authorizationOptions += UNAuthorizationOptionAlert;
+//         }
+//         if (requestedBadgePermission) {
+//             authorizationOptions += UNAuthorizationOptionBadge;
+//         }
+//         [center requestAuthorizationWithOptions:(authorizationOptions) completionHandler:^(BOOL granted, NSError * _Nullable error) {
+//             if(self->launchPayload != nil) {
+//                 [self handleSelectNotification:self->launchPayload];
+//             }
+//             result(@(granted));
+//         }];
+//     } else {
+//         UIUserNotificationType notificationTypes = 0;
+//         if (requestedSoundPermission) {
+//             notificationTypes |= UIUserNotificationTypeSound;
+//         }
+//         if (requestedAlertPermission) {
+//             notificationTypes |= UIUserNotificationTypeAlert;
+//         }
+//         if (requestedBadgePermission) {
+//             notificationTypes |= UIUserNotificationTypeBadge;
+//         }
+//         UIUserNotificationSettings *settings = [UIUserNotificationSettings settingsForTypes:notificationTypes categories:nil];
+//         [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
+//         if(launchNotification != nil) {
+//             NSString *payload = launchNotification.userInfo[PAYLOAD];
+//             [self handleSelectNotification:payload];
+//         }
+//         result(@YES);
+//     }
     initialized = true;
 }
 
@@ -257,34 +257,34 @@ typedef NS_ENUM(NSInteger, RepeatInterval) {
 
 - (void)cancelNotification:(FlutterMethodCall * _Nonnull)call result:(FlutterResult _Nonnull)result {
     NSNumber* id = (NSNumber*)call.arguments;
-    if(@available(iOS 10.0, *)) {
-        UNUserNotificationCenter *center =  [UNUserNotificationCenter currentNotificationCenter];
-        NSArray *idsToRemove = [[NSArray alloc] initWithObjects:[id stringValue], nil];
-        [center removePendingNotificationRequestsWithIdentifiers:idsToRemove];
-        [center removeDeliveredNotificationsWithIdentifiers:idsToRemove];
-    } else {
-        NSArray *notifications = [UIApplication sharedApplication].scheduledLocalNotifications;
-        for( int i = 0; i < [notifications count]; i++) {
-            UILocalNotification* localNotification = [notifications objectAtIndex:i];
-            NSNumber *userInfoNotificationId = localNotification.userInfo[NOTIFICATION_ID];
-            if([userInfoNotificationId longValue] == [id longValue]) {
-                [[UIApplication sharedApplication] cancelLocalNotification:localNotification];
-                break;
-            }
-        }
-    }
-    result(nil);
+//     if(@available(iOS 10.0, *)) {
+//         UNUserNotificationCenter *center =  [UNUserNotificationCenter currentNotificationCenter];
+//         NSArray *idsToRemove = [[NSArray alloc] initWithObjects:[id stringValue], nil];
+//         [center removePendingNotificationRequestsWithIdentifiers:idsToRemove];
+//         [center removeDeliveredNotificationsWithIdentifiers:idsToRemove];
+//     } else {
+//         NSArray *notifications = [UIApplication sharedApplication].scheduledLocalNotifications;
+//         for( int i = 0; i < [notifications count]; i++) {
+//             UILocalNotification* localNotification = [notifications objectAtIndex:i];
+//             NSNumber *userInfoNotificationId = localNotification.userInfo[NOTIFICATION_ID];
+//             if([userInfoNotificationId longValue] == [id longValue]) {
+//                 [[UIApplication sharedApplication] cancelLocalNotification:localNotification];
+//                 break;
+//             }
+//         }
+//     }
+//     result(nil);
 }
 
 - (void)cancelAllNotifications:(FlutterResult _Nonnull) result {
-    if(@available(iOS 10.0, *)) {
-        UNUserNotificationCenter *center =  [UNUserNotificationCenter currentNotificationCenter];
-        [center removeAllPendingNotificationRequests];
-        [center removeAllDeliveredNotifications];
-    } else {
-        [[UIApplication sharedApplication] cancelAllLocalNotifications];
-    }
-    result(nil);
+//     if(@available(iOS 10.0, *)) {
+//         UNUserNotificationCenter *center =  [UNUserNotificationCenter currentNotificationCenter];
+//         [center removeAllPendingNotificationRequests];
+//         [center removeAllDeliveredNotifications];
+//     } else {
+//         [[UIApplication sharedApplication] cancelAllLocalNotifications];
+//     }
+//     result(nil);
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
@@ -380,13 +380,13 @@ typedef NS_ENUM(NSInteger, RepeatInterval) {
     }
     UNNotificationRequest* notificationRequest = [UNNotificationRequest
                                                   requestWithIdentifier:[notificationDetails.id stringValue] content:content trigger:trigger];
-    UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-    [center addNotificationRequest:notificationRequest withCompletionHandler:^(NSError * _Nullable error) {
-        if (error != nil) {
-            NSLog(@"Unable to Add Notification Request");
-        }
-    }];
-    
+//     UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+//     [center addNotificationRequest:notificationRequest withCompletionHandler:^(NSError * _Nullable error) {
+//         if (error != nil) {
+//             NSLog(@"Unable to Add Notification Request");
+//         }
+//     }];
+
 }
 
 - (void) showLocalNotification:(NotificationDetails *) notificationDetails {
